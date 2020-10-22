@@ -16,7 +16,7 @@ var completeEditTask = function(taskName, taskType, taskId){
     formEl.removeAttribute("data-task-id");
     document.querySelector("#save-task").textContent = "Add Task"
 
-}
+};
 var taskFormHandler = function(){
     event.preventDefault();
 
@@ -57,6 +57,7 @@ var createTaskEl = function(taskDataObj){
     listItemEl.className = "task-item";
     // add task id as a custom attribute
   listItemEl.setAttribute("data-task-id", taskIdCounter);
+  listItemEl.setAttribute("draggable", "true")
 
     // create div to hold task info and add to list item
     var taskInfoEl = document.createElement("div")
@@ -111,7 +112,7 @@ var createTaskActions = function (taskId){
 
 
     return actionContainerEl;
-}
+};
 
 
 
@@ -132,7 +133,7 @@ var taskBtnHandler = function(event) {
         var taskId = event.target.getAttribute("data-task-id")
         delTask(taskId);
     }
-}
+};
 
 var editTask = function(taskId){
    // get task list item element
@@ -146,7 +147,7 @@ var editTask = function(taskId){
     document.querySelector("select[name='task-type']").value = taskType;
     document.querySelector("#save-task").textContent = "Save Task";
     formEl.setAttribute("data-task-id", taskId);
-}
+};
 
 var delTask = function(taskId){
     var taskSelected = document.querySelector(".task-item[data-task-id='" + taskId + "']");
@@ -169,8 +170,52 @@ var taskStatusChangeHandler = function(event){
     else if (statusValue === "completed") {
         tasksCompleted.appendChild(taskSelected);
     }
+};
+
+var dragTaskHandler = function(){
+    var taskId = event.target.getAttribute("data-task-id");
+    event.dataTransfer.setData("text/plain", taskId);
+    // var getId = event.dataTransfer.getData("text/plain");
+    // console.log("getId", getId, typeof getId);
+};
+
+var dropZoneDragHandler = function(){
+    var taskListEl = event.target.closest(".task-list");
+        if (taskListEl){
+            event.preventDefault();
+            taskListEl.setAttribute("style", "background: rgba(68, 233, 255, 0.7); border-style: dashed; box-shadow: 0 0 10px rgba(0, 0, 0, 50%)");           
+        }
+};
+
+var dropTaskHandler = function(event){
+    var id = event.dataTransfer.getData("text/plain");
+    var draggableElement = document.querySelector("[data-task-id='" + id + "']")
+    var dropZoneEl = event.target.closest(".task-list");
+    var statusType = dropZoneEl.id;
+    var statusSelectEl = draggableElement.querySelector("select[name='status-change']")
+        if (statusType === "tasks-to-do"){
+            statusSelectEl.selectedIndex = 0;
+        }
+        else if (statusType === "tasks-in-progress"){
+            statusSelectEl.selectedIndex = 1;
+        }
+        else if (statusType === "tasks-completed"){
+            statusSelectEl.selectedIndex = 2;
+        }
+        dropZoneEl.appendChild(draggableElement);
+        dropZoneEl.removeAttribute("style");
+};
+
+var dragLeaveHandler = function(event) {
+    var taskListEl = event.target.closest(".task-list");
+    if (taskListEl) {
+    taskListEl.removeAttribute("style");
+}
 }
 
 pageContentEl.addEventListener("click", taskBtnHandler)
 pageContentEl.addEventListener("change", taskStatusChangeHandler)
-
+pageContentEl.addEventListener("dragstart", dragTaskHandler)
+pageContentEl.addEventListener("dragover", dropZoneDragHandler);
+pageContentEl.addEventListener("drop", dropTaskHandler);
+pageContentEl.addEventListener("dragleave", dragLeaveHandler);
